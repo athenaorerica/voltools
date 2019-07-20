@@ -33,54 +33,22 @@ def unpack(filename):
         print("Invalid input file!")
         sys.exit(1)
 
-
-def dumpVOL(f):
-    # get 4-byte file directory offset
-    fDirOffset = f.read(4)
-
-    # seek to the file directory
-    fDir = f.seek(int.from_bytes(fDirOffset, "little"))
-
-    # read 4 bytes to get file directory header and check it
-    fDirHdr = f.read(4)
-    assert fDirHdr.decode() == "vols"
-
-    # read 4 bytes to get the length of the file directory, and make it an int
-    fDirLen = int.from_bytes(f.read(4), "little")
-
-    # load the file directory's contents into memory
-    fDirContent = f.read(fDirLen)
-
-    # read 4 bytes to get info directory header and check it
-    iDirHdr = f.read(4)
-    assert iDirHdr.decode() == "voli"
-
-    # read 4 bytes to get info directory length, and make it an int
-    iDirLen = int.from_bytes(f.read(4), "little")
-
-    # load the info directory's content into memory
-    iDirContent = f.read(iDirLen)
-
-    # make a list of info entries (17 bytes long) by dividing the content of the directory
-    iDirEntries = [iDirContent[x:x+17] for x in range(0,len(iDirContent), 17)]
-
-    # declare dict for files
+def __parseDetailDirectory(detailDirEntries, fileDirContents, f):
     files = {}
-
-    # parse info directory entries
-    for entry in iDirEntries:
+    # parse detail directory entries
+    for entry in detailDirEntries:
         # make sure it's a valid entry (4-null header)
         nulls = entry[:4]
         assert nulls == b'\x00\x00\x00\x00'
 
-        # get filename index from the entry
-        fnIndex = int.from_bytes(entry[4:8], "little")
+        # get filename offset from the entry
+        fnOffset = int.from_bytes(entry[4:8], "little")
 
         # use a list to build filename
         fn = []
 
         # add characters to fn list until we find a null
-        for i in fDirContent[fnIndex::]:
+        for i in fileDirContents[fnOffset::]:
             if i == 0: # if the character is null
                 fn = "".join(fn) # turn list into string
                 break
@@ -110,14 +78,53 @@ def dumpVOL(f):
 
         # get file data, build entry and add to dict
         files.update({fn: f.read(fLen)})
+    return files
 
+def __dumpFiles(fileDict, fileName):
     # make directory for extracted files
-    os.makedirs(f.name+"-ext", exist_ok=True)
+    os.makedirs(fileName+"-ext", exist_ok=True)
 
     # dump files
-    for fn, d in files.items():
-        nf = open(os.path.join(f.name+"-ext", fn), "wb") # open file for binary writing
+    for fn, d in fileDict.items():
+        nf = open(os.path.join(fileName+"-ext", fn), "wb") # open file for binary writing
         nf.write(d) # dump the entire value of the entry
+
+
+def dumpVOL(f):
+    # get 4-byte file directory offset
+    fDirOffset = f.read(4)
+
+    # seek to the file directory
+    fDir = f.seek(int.from_bytes(fDirOffset, "little"))
+
+    # read 4 bytes to get file directory header and check it
+    fDirHdr = f.read(4)
+    assert fDirHdr.decode() == "vols"
+
+    # read 4 bytes to get the length of the file directory, and make it an int
+    fDirLen = int.from_bytes(f.read(4), "little")
+
+    # load the file directory's contents into memory
+    fDirContent = f.read(fDirLen)
+
+    # read 4 bytes to get detail directory header and check it
+    dDirHdr = f.read(4)
+    assert dDirHdr.decode() == "voli"
+
+    # read 4 bytes to get detail directory length, and make it an int
+    dDirLen = int.from_bytes(f.read(4), "little")
+
+    # load the info directory's content into memory
+    dDirContent = f.read(dDirLen)
+
+    # make a list of info entries (17 bytes long) by dividing the content of the directory
+    dDirEntries = [dDirContent[x:x+17] for x in range(0,len(dDirContent), 17)]
+
+    # parse info directory entries
+    files = __parseDetailDirectory(dDirEntries,fDirContent,f)
+
+    # dump files
+    __dumpFiles(files, f.name)
 
 def dumpVOL2(f):
     return NotImplemented
