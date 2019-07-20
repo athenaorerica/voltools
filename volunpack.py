@@ -1,5 +1,5 @@
 # volunpack.py
-# version 0.511 (half finished now!)
+# version 0.75 (more than half finished now!)
 #
 # this file is part of voltools
 #
