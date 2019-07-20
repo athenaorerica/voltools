@@ -9,7 +9,7 @@
 # may be licensed differently after completion
 #
 # written by and copyright © 2019 Erica Garcia [athenaorerica] <me@athenas.space>
-# all rights reserved, distribution is prohibited.
+# licensed under the MIT license [https://license.athenas.space/mit] | SPDX-License-Identifier: MIT
 #
 # this code says: trans rights
 #
