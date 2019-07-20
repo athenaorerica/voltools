@@ -36,80 +36,80 @@ def unpack(filename):
 
 def dumpVOL(f):
     # get 4-byte file directory offset
-    fdiroffset = f.read(4)
+    fDirOffset = f.read(4)
 
     # seek to the file directory
-    fdir = f.seek(int.from_bytes(fdiroffset, "little"))
+    fDir = f.seek(int.from_bytes(fDirOffset, "little"))
 
     # read 4 bytes to get file directory header and check it
-    fdirhdr = f.read(4)
-    assert fdirhdr.decode() == "vols"
+    fDirHdr = f.read(4)
+    assert fDirHdr.decode() == "vols"
 
     # read 4 bytes to get the length of the file directory, and make it an int
-    fdirlen = int.from_bytes(f.read(4), "little")
+    fDirLen = int.from_bytes(f.read(4), "little")
 
     # load the file directory's contents into memory
-    fdircontent = f.read(fdirlen)
+    fDirContent = f.read(fDirLen)
 
     # read 4 bytes to get info directory header and check it
-    idirhdr = f.read(4)
-    assert idirhdr.decode() == "voli"
+    iDirHdr = f.read(4)
+    assert iDirHdr.decode() == "voli"
 
     # read 4 bytes to get info directory length, and make it an int
-    idirlen = int.from_bytes(f.read(4), "little")
+    iDirLen = int.from_bytes(f.read(4), "little")
 
-    # load the info directory's content into memory (to EOF)
-    idircontent = f.read()
+    # load the info directory's content into memory
+    iDirContent = f.read(iDirLen)
 
     # make a list of info entries (17 bytes long) by dividing the content of the directory
-    idirentries = [idircontent[x:x+17] for x in range(0,len(idircontent), 17)]
+    iDirEntries = [iDirContent[x:x+17] for x in range(0,len(iDirContent), 17)]
 
     # declare dict for files
     files = {}
 
     # parse info directory entries
-    for entry in idirentries:
+    for entry in iDirEntries:
         # make sure it's a valid entry (4-null header)
         nulls = entry[:4]
         assert nulls == b'\x00\x00\x00\x00'
 
         # get filename index from the entry
-        fnindex = int.from_bytes(entry[4:8], "little")
+        fnIndex = int.from_bytes(entry[4:8], "little")
 
         # use a list to build filename
         fn = []
 
         # add characters to fn list until we find a null
-        for i in fdircontent[fnindex::]:
+        for i in fDirContent[fnIndex::]:
             if i == 0: # if the character is null
                 fn = "".join(fn) # turn list into string
                 break
             fn.append(chr(i)) # add current character to fn list
 
         # get the offset at which file data is stored
-        dataoffset = int.from_bytes(entry[8:12], "little")
+        dataOffset = int.from_bytes(entry[8:12], "little")
 
         # get file length
-        flen = int.from_bytes(entry[12:15], "little")
+        fLen = int.from_bytes(entry[12:15], "little")
 
         # check for the last null
         assert entry[16] == 0
 
         # seek to the file data entry
-        f.seek(dataoffset)
+        f.seek(dataOffset)
 
         # check file header
-        fhdr = f.read(4)
-        assert fhdr.decode() == "VBLK"
+        fHdr = f.read(4)
+        assert fHdr.decode() == "VBLK"
 
         # we're already here, the file length's also in the header so might as well sanity check it
-        assert flen == int.from_bytes(f.read(3), "little")
+        assert fLen == int.from_bytes(f.read(3), "little")
 
         # seek past the unknown data
         f.seek(1, 1)
 
         # get file data, build entry and add to dict
-        files.update({fn: f.read(flen)})
+        files.update({fn: f.read(fLen)})
 
     # make directory for extracted files
     os.makedirs(f.name+"-ext", exist_ok=True)
