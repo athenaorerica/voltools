@@ -155,7 +155,12 @@ def dumpVOL2(f):
     fDirContent = f.read(fDirLen)
 
     # read details directory header and check
-    assert f.read(4).decode() == "voli"
+    dDirHdr = f.read(4).decode()
+    assert dDirHdr in ["voli", '\x00vol']
+
+    # sometimes VOL2 has some weird padding between file and details directories, so skip a byte if there's a null
+    if dDirHdr == '\x00vol':
+        f.seek(1,1)
 
     # read details directory length and make it into an int
     dDirLen = int.from_bytes(f.read(4), "little")
