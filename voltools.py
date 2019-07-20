@@ -127,6 +127,41 @@ def dumpVOL(f):
     __dumpFiles(files, f.name)
 
 def dumpVOL2(f):
-    return NotImplemented
+    # get 4-byte empty directory offset
+    eDirOffset = f.read(4)
+
+    # seek to the empty directory
+    eDir = f.seek(int.from_bytes(eDirOffset, "little"))
+
+    # seek past the 16 bytes of empty directory
+    f.seek(16, 1)
+
+    # read file directory header and check
+    assert f.read(4).decode() == "vols"
+
+    # read file directory length and make it into an int
+    fDirLen = int.from_bytes(f.read(4), "little")
+
+    # read the contents of the file directory
+    fDirContent = f.read(fDirLen)
+
+    # read details directory header and check
+    assert f.read(4).decode() == "voli"
+
+    # read details directory length and make it into an int
+    dDirLen = int.from_bytes(f.read(4), "little")
+
+    # read details directory contents
+    dDirContent = f.read(dDirLen)
+
+    # split the details directory into 17 byte long entries
+    dDirEntries = [dDirContent[x:x+17] for x in range(0,len(dDirContent), 17)]
+
+    # parse info directory entries
+    files = __parseDetailDirectory(dDirEntries,fDirContent,f)
+
+    # dump files
+    __dumpFiles(files, f.name)
+
 
 unpack(sys.argv[1])
