@@ -1,4 +1,6 @@
 # voltools.py
+# version 0.25 (because it's a quarter finished lmao)
+#
 # this file is part of voltools
 #
 # packer/extractor for vol files
