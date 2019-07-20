@@ -120,7 +120,7 @@ def dumpVOL(f):
     # make a list of info entries (17 bytes long) by dividing the content of the directory
     dDirEntries = [dDirContent[x:x+17] for x in range(0,len(dDirContent), 17)]
 
-    # parse info directory entries
+    # parse detail directory entries
     files = __parseDetailDirectory(dDirEntries,fDirContent,f)
 
     # dump files
@@ -157,7 +157,7 @@ def dumpVOL2(f):
     # split the details directory into 17 byte long entries
     dDirEntries = [dDirContent[x:x+17] for x in range(0,len(dDirContent), 17)]
 
-    # parse info directory entries
+    # parse detail directory entries
     files = __parseDetailDirectory(dDirEntries,fDirContent,f)
 
     # dump files
