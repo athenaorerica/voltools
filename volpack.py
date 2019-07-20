@@ -15,7 +15,7 @@
 #
 # don't like that? suck it up, or write your own code ^-^
 
-import os, sys, argparse
+import os, sys
 
 def pack(dirname):
     open(dirname+".vol", "wb") # create file

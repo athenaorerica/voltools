@@ -15,7 +15,7 @@
 #
 # don't like that? suck it up, or write your own code ^-^
 
-import os, sys, argparse
+import os, sys
 
 def unpack(filename):
     # open the file
