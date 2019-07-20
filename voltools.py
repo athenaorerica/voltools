@@ -1,5 +1,5 @@
 # voltools.py
-# version 0.501 (half finished now!)
+# version 0.511 (half finished now!)
 #
 # this file is part of voltools
 #
