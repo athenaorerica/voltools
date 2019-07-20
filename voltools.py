@@ -1,5 +1,5 @@
 # voltools.py
-# this file is part of vol-expacker
+# this file is part of voltools
 #
 # packer/extractor for vol files
 #
