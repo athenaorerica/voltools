@@ -1,9 +1,9 @@
-# voltools.py
-# version 0.511 (half finished now!)
+# volunpack.py
+# version 0.75 (more than half finished now!)
 #
 # this file is part of voltools
 #
-# packer/extractor for vol files
+# unpacker for vol files
 #
 # pre-production software
 # may be licensed differently after completion
@@ -98,7 +98,6 @@ def __dumpFiles(fileDict, fileName):
         nf = open(os.path.join(fileName+"-ext", fn), "wb") # open file for binary writing
         nf.write(d) # dump the entire value of the entry
 
-
 def dumpVOL(f):
     # get 4-byte file directory offset
     fDirOffset = f.read(4)
@@ -176,6 +175,5 @@ def dumpVOL2(f):
 
     # dump files
     __dumpFiles(files, f.name)
-
 
 unpack(sys.argv[1])
