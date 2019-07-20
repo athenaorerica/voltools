@@ -60,8 +60,8 @@ def __parseDetailDirectory(detailDirEntries, fileDirContents, f):
         # get file length
         fLen = int.from_bytes(entry[12:15], "little")
 
-        # check for the last null
-        assert entry[16] == 0
+        # check whether file is compressed or not
+        compressionFlag = entry[16]
 
         # seek to the file data entry
         f.seek(dataOffset)
@@ -76,9 +76,18 @@ def __parseDetailDirectory(detailDirEntries, fileDirContents, f):
         # seek past the unknown data
         f.seek(1, 1)
 
-        # get file data, build entry and add to dict
-        files.update({fn: f.read(fLen)})
+        # get file data and decompress if necessary
+        fileData = __decompressFile(f.read(fLen), compressionFlag)
+
+        # build file entry and add to dict
+        files.update({fn: fileData})
     return files
+
+def __decompressFile(fileData, compressionFlag):
+    if compressionFlag == 0:
+        return fileData
+    elif compressionFlag == 3:
+        return fileData # placeholder while I figure out what the hell this butchered form of LZH is
 
 def __dumpFiles(fileDict, fileName):
     # make directory for extracted files
