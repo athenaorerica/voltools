@@ -26,7 +26,7 @@ def unpack(filename):
 
     # check header
     if hdr.decode() == "PVOL":
-        dumpVOL(f) # VOL dumping method
+        dumpPVOL(f) # PVOL dumping method
     elif hdr.decode() == " VOL":
         dumpVOL2(f) # VOL2 dumping method
     else: # what did you give me?!
@@ -98,7 +98,7 @@ def __dumpFiles(fileDict, fileName):
         nf = open(os.path.join(fileName+"-ext", fn), "wb") # open file for binary writing
         nf.write(d) # dump the entire value of the entry
 
-def dumpVOL(f):
+def dumpPVOL(f):
     # get 4-byte file directory offset
     fDirOffset = f.read(4)
 

@@ -20,11 +20,10 @@ import os, sys
 def pack(dirname):
     open(dirname+".vol", "wb") # create file
     f = open(dirname+".vol", 'r+b') # open file for writing in bin mode
-    packVOL(dirname, f)
+    packPVOL(dirname, f)
 
-def packVOL(src, volFile):
-    # declare a list to hold filenames
-    filesToPack = []
+def packPVOL(src, volFile):
+    filesToPack = [] # declare a list to hold filenames
     for (dp, dn, fn) in os.walk(src): # walk the current directory
         filesToPack.extend(fn) # add filenames to the list
         src = dp # for good measure, make the source the dirpath
