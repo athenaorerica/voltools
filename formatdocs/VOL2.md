@@ -2,6 +2,9 @@
 
 Endianness: Little
 
+Used in:
+ - Star Siege
+
 ```
 <File>
     char   {4} = " VOL" // Header
