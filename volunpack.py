@@ -92,12 +92,11 @@ def __decompressFile(fileData, compressionFlag):
         return fileData # placeholder while I figure out what the hell this butchered form of LZH is
 
 def __dumpFiles(fileDict, fileName):
-    # make directory for extracted files
-    os.makedirs(fileName+"-ext", exist_ok=True)
-
     # dump files
     for fn, d in fileDict.items():
-        nf = open(os.path.join(fileName+"-ext", fn), "wb") # open file for binary writing
+        path = os.path.join(fileName+"-ext", fn) # construct the target path
+        os.makedirs(os.path.dirname(path), exist_ok=True) # make sure we actually have somewhere to put the file
+        nf = open(path, "wb") # open file for binary writing
         nf.write(d) # dump the entire value of the entry
 
 def dumpPVOL(f):
