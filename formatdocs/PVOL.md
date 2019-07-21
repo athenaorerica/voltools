@@ -5,7 +5,7 @@ Endianness: Little
 ```
 <File>
     char   {4} = "PVOL" // Header
-    uint32 {4}			// Absolute pointer to FileNameDirectory
+    uint32 {4}          // Absolute pointer to FileNameDirectory
 
     <DataBlock>
     	<DataBlock_entry> // one per file
