@@ -117,7 +117,11 @@ def dumpPVOL(f):
 
     # read 4 bytes to get detail directory header and check it
     dDirHdr = f.read(4)
-    assert dDirHdr.decode() == "voli"
+    assert dDirHdr in ["voli", '\x00vol']
+
+    # sometimes PVOL has some weird padding between file and details directories, so skip a byte if there's a null
+    if dDirHdr == '\x00vol':
+        f.seek(1,1)
 
     # read 4 bytes to get detail directory length, and make it an int
     dDirLen = int.from_bytes(f.read(4), "little")
