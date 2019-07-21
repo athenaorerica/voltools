@@ -36,6 +36,11 @@ def unpack(filename):
         sys.exit(1)
 
 def __parseDetailDirectory(detailDirEntries, fileDirContents, f):
+    # just declaring some constants for readability
+    COMPRESSION_NONE = 0
+    COMPRESSION_LZH = 3
+
+    # declare a dict to keep the files
     files = {}
     # parse detail directory entries
     for entry in detailDirEntries:
@@ -59,8 +64,8 @@ def __parseDetailDirectory(detailDirEntries, fileDirContents, f):
         # get the offset at which file data is stored
         dataOffset = int.from_bytes(entry[8:12], "little")
 
-        # get file length
-        fLen = int.from_bytes(entry[12:15], "little")
+        # get file length from details directory
+        fLenFromDir = int.from_bytes(entry[12:15], "little")
 
         # check whether file is compressed or not
         compressionFlag = entry[16]
@@ -72,11 +77,20 @@ def __parseDetailDirectory(detailDirEntries, fileDirContents, f):
         fHdr = f.read(4)
         assert fHdr.decode() == "VBLK"
 
-        # we're already here, the file length's also in the header so might as well sanity check it
-        assert fLen == int.from_bytes(f.read(3), "little")
+        # some vols are weird and have mismatched filesize in the directory and header, so storing both
+        fLenFromHdr = int.from_bytes(f.read(3), "little")
 
         # seek past the unknown data
         f.seek(1, 1)
+
+        # provisionally set length to what the file directory claims
+        fLen = fLenFromDir
+
+        # make a decision if filesizes are discrepant
+        if fLenFromDir != fLenFromHdr:
+            if compressionFlag == COMPRESSION_LZH: # if the file is LZH compressed
+                fLen = fLenFromHdr if fLenFromHdr < fLenFromDir else fLenFromDir # go with the filesize specified in header if it's smaller, otherwise use directory's
+        # (if the file is not LZH compressed, filesize still defaults to the directory's)
 
         # get file data and decompress if necessary
         fileData = __decompressFile(f.read(fLen), compressionFlag)
