@@ -27,6 +27,8 @@ Endianness: Little
         </FileNameDirectory_contents>
     </FileNameDirectory>
 
+    byte   {0|1} = null // Padding, may or may not be there, can't find a reason for its absence/inclusion
+
     <DetailsDirectory>
      	char   {4} = "voli" // Header
         uint32 {4}          // size of DetailsDirectory_contents
