@@ -29,6 +29,8 @@ def unpack(filename):
         dumpPVOL(f) # PVOL dumping method
     elif hdr.decode() == " VOL":
         dumpVOL2(f) # VOL2 dumping method
+    elif hdr.decode() == "VOLN":
+        dumpVOLN(f) # VOLN dumping method
     else: # what did you give me?!
         print("Invalid input file!")
         sys.exit(1)
@@ -179,5 +181,8 @@ def dumpVOL2(f):
 
     # dump files
     __dumpFiles(files, f.name)
+
+def dumpVOLN(f):
+    raise NotImplementedError
 
 unpack(sys.argv[1])
