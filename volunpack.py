@@ -15,6 +15,45 @@
 #
 # don't like that? suck it up, or write your own code ^-^
 
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@=*+++++::::+*===@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@=*****:--........-....-:*=@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@*---.......................-*@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@:+=@@@@@@@@@@@*:--------...........-----.......-+@@@@@@@@@@@@@@@@@@@==**@
+# @@@@@+::---:=@@@@@=:--------:---........----------------:*@@@@@@@@@@@@=+:::::+@
+# @@@@@:::::-----:*+------------.-.......-------------------:=@@@@@@@*+::::::::*@
+# @@@@=::+++:+::----::::::--::------....----:::::------------:=@@@@:+****+++:::=@
+# @@@@@=::+****+::::::::::::-:+:--------.--:+++=#==+:---------:*+::**+=#==*+++=@@
+# @@@@@=:--++*****:::::::::::-:+::------....-:::+=##=+:--------:*==*+=#==*+::=@@@
+# @@@@@@=::::+****++::::::::-----------.-.-.---:::+=#=:::----:*===*******+++*@@@@
+# @@@@@@@=:::++**:++++:::::----------------...---------:---:+*=********+++++=@@@@
+# @@@@@@@@=:::++:::++++::::-----.------------..--------::::+***********++++*@@@@@
+# @@@@@@@@@@=+:::::+++:::::-------------------..-----:-:::+***=*++++++++++*@@@@@@
+# @@@@@@@@@@@@=+::++++++::::-----------------------------:*+*++:::::++++=@@@@@@@@
+# @@@@@@@@@@@@@=+:++++++::::::--------------------------::*+++++++++++=@@@@@@@@@@
+# @@@@@@@@@@@@@@*+:++++++::::::::-------::------------:::++++++++++:*@@@@@@@@@@@@
+# @@@@@@@@@@@@@@=*++++++++++++:::::::-----::-------:::::**+++++++::*@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@=++++++++++++::::::::::--:::----:::::::::++++:::+*@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@=+++++++++++++++:::::::-:::::--:::::::::::::::*=@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@=+++++++++++++::::::::::::----:::----::::::+=@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@=+::+++++:::::::::::::::::--::::-------::+=@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@=::::::::::::::::::::::::::::::::--------:*@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@=+::::::::::::::::::::::::::::::::::------:+=@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@=*:::::::-::::::::::::::---:-::::-:::------:=@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@*:::::--------------------::::::-----------+@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@=+:----------------::::::::::-:::::---------.-+@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@=+:-------------:::::::::-----::::----------....-+@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@=+:------------------------------------------.......:=@@@@@@@@@@@@@@
+# @@@@@@@@@@@+:--------------------------::::-------------........-+@@@@@@@@@@@@@
+# @@@@@@@@@@*:-----------------------:-:-:----------------.........-:=@@@@@@@@@@@
+# @@@@@@@@@=:-------------------::------------------------..........-+@@@@@@@@@@@
+# @@@@@@@@=:----------------------------------------------..........-:=@@@@@@@@@@
+# @@@@@@@=:-----------------------------------------------...........-+@@@@@@@@@@
+
 import os, sys
 
 def unpack(filename):
@@ -26,14 +65,21 @@ def unpack(filename):
 
     # check header
     if hdr.decode() == "PVOL":
-        dumpVOL(f) # VOL dumping method
+        dumpPVOL(f) # PVOL dumping method
     elif hdr.decode() == " VOL":
         dumpVOL2(f) # VOL2 dumping method
+    elif hdr.decode() == "VOLN":
+        dumpVOLN(f) # VOLN dumping method
     else: # what did you give me?!
         print("Invalid input file!")
         sys.exit(1)
 
 def __parseDetailDirectory(detailDirEntries, fileDirContents, f):
+    # just declaring some constants for readability
+    COMPRESSION_NONE = 0
+    COMPRESSION_LZH = 3
+
+    # declare a dict to keep the files
     files = {}
     # parse detail directory entries
     for entry in detailDirEntries:
@@ -57,8 +103,8 @@ def __parseDetailDirectory(detailDirEntries, fileDirContents, f):
         # get the offset at which file data is stored
         dataOffset = int.from_bytes(entry[8:12], "little")
 
-        # get file length
-        fLen = int.from_bytes(entry[12:15], "little")
+        # get file length from details directory
+        fLenFromDir = int.from_bytes(entry[12:15], "little")
 
         # check whether file is compressed or not
         compressionFlag = entry[16]
@@ -70,11 +116,20 @@ def __parseDetailDirectory(detailDirEntries, fileDirContents, f):
         fHdr = f.read(4)
         assert fHdr.decode() == "VBLK"
 
-        # we're already here, the file length's also in the header so might as well sanity check it
-        assert fLen == int.from_bytes(f.read(3), "little")
+        # some vols are weird and have mismatched filesize in the directory and header, so storing both
+        fLenFromHdr = int.from_bytes(f.read(3), "little")
 
         # seek past the unknown data
         f.seek(1, 1)
+
+        # provisionally set length to what the file directory claims
+        fLen = fLenFromDir
+
+        # make a decision if filesizes are discrepant
+        if fLenFromDir != fLenFromHdr:
+            if compressionFlag == COMPRESSION_LZH: # if the file is LZH compressed
+                fLen = fLenFromHdr if fLenFromHdr < fLenFromDir else fLenFromDir # go with the filesize specified in header if it's smaller, otherwise use directory's
+        # (if the file is not LZH compressed, filesize still defaults to the directory's)
 
         # get file data and decompress if necessary
         fileData = __decompressFile(f.read(fLen), compressionFlag)
@@ -90,15 +145,14 @@ def __decompressFile(fileData, compressionFlag):
         return fileData # placeholder while I figure out what the hell this butchered form of LZH is
 
 def __dumpFiles(fileDict, fileName):
-    # make directory for extracted files
-    os.makedirs(fileName+"-ext", exist_ok=True)
-
     # dump files
     for fn, d in fileDict.items():
-        nf = open(os.path.join(fileName+"-ext", fn), "wb") # open file for binary writing
+        path = os.path.join(fileName+"-ext", fn) # construct the target path
+        os.makedirs(os.path.dirname(path), exist_ok=True) # make sure we actually have somewhere to put the file
+        nf = open(path, "wb") # open file for binary writing
         nf.write(d) # dump the entire value of the entry
 
-def dumpVOL(f):
+def dumpPVOL(f):
     # get 4-byte file directory offset
     fDirOffset = f.read(4)
 
@@ -116,8 +170,12 @@ def dumpVOL(f):
     fDirContent = f.read(fDirLen)
 
     # read 4 bytes to get detail directory header and check it
-    dDirHdr = f.read(4)
-    assert dDirHdr.decode() == "voli"
+    dDirHdr = f.read(4).decode()
+    assert dDirHdr in ["voli", '\x00vol']
+
+    # sometimes PVOL has some weird padding between file and details directories, so skip a byte if there's a null
+    if dDirHdr == '\x00vol':
+        f.seek(1,1)
 
     # read 4 bytes to get detail directory length, and make it an int
     dDirLen = int.from_bytes(f.read(4), "little")
@@ -175,5 +233,8 @@ def dumpVOL2(f):
 
     # dump files
     __dumpFiles(files, f.name)
+
+def dumpVOLN(f):
+    raise NotImplementedError
 
 unpack(sys.argv[1])
