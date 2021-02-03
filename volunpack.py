@@ -8,7 +8,7 @@
 # pre-production software
 # may be licensed differently after completion
 #
-# written by and copyright © 2019 Erica Garcia [athenaorerica] <me@athenas.space>
+# written by and copyright © 2020 Erica Garcia [ericathesnark] <me@athenas.space>
 # licensed under the MIT license [https://license.athenas.space/mit] | SPDX-License-Identifier: MIT
 #
 # this code says: trans rights
